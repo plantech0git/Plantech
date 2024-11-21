@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Origins Map</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+        }
+        #map { 
+            width: 100%; 
+            height: 100vh; 
+            position: absolute; 
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([20, 0], 2);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Function to highlight countries
+        function highlightCountry(countryData) {
+            // Clear existing highlighted countries
+            map.eachLayer((layer) => {
+                if (layer instanceof L.GeoJSON) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            if (countryData) {
+                L.geoJSON(countryData, {
+                    style: {
+                        fillColor: '#3388ff',
+                        fillOpacity: 0.4,
+                        color: '#3388ff',
+                        weight: 2
+                    }
+                }).addTo(map);
+            }
+        }
+
+        // Listen for messages from Thunkable
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'HIGHLIGHT_COUNTRIES') {
+                highlightCountry(event.data.countries);
+            }
+        });
+    </script>
+</body>
+</html>
