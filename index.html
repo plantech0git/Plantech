@@ -38,6 +38,10 @@
                 
                 // Maak een Leaflet GeoJSON laag
                 var countriesLayer = L.geoJSON(geojson, {
+                    filter: function(feature) {
+                        // Filter uit om alleen echte landgrenzen weer te geven
+                        return feature.id === '643' || feature.id === '242' || feature.properties.name !== '';
+                    },
                     style: function(feature) {
                         // Standaard stijl voor landen
                         var defaultStyle = {
