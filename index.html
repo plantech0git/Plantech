@@ -2,9 +2,11 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>China Landsgrenzen Gemarkeerd</title>
+    <title>World Atlas TopoJSON</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
     <style>
         #map { 
             height: 600px; 
@@ -16,84 +18,64 @@
     <div id="map"></div>
 
     <script>
-        // Initialiseer de kaart, gecentreerd op China
-        var map = L.map('map').setView([35, 103], 4);
+        // Initialiseer de kaart
+        var map = L.map('map').setView([30, 0], 3);
 
-        // Voeg een OpenStreetMap tile layer toe
+        // Voeg OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // GeoJSON data voor China met nauwkeurige landgrens
-        var chinaGeoJSON = {
-            "type": "Feature",
-            "properties": {
-                "name": "China"
-            },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [73.66, 53.33],
-                        [134.77, 53.33],
-                        [134.77, 47.72],
-                        [137.12, 46.82],
-                        [137.12, 42.38],
-                        [136.18, 41.11],
-                        [136.51, 38.96],
-                        [134.77, 38.94],
-                        [134.77, 34.25],
-                        [132.43, 33.61],
-                        [131.86, 33.23],
-                        [130.20, 31.82],
-                        [127.96, 30.85],
-                        [124.21, 27.44],
-                        [119.11, 22.40],
-                        [114.17, 22.27],
-                        [113.84, 22.19],
-                        [113.34, 21.26],
-                        [109.49, 21.54],
-                        [108.86, 21.10],
-                        [107.38, 20.14],
-                        [106.62, 20.90],
-                        [105.29, 21.71],
-                        [104.05, 22.96],
-                        [101.76, 23.37],
-                        [98.80, 24.42],
-                        [96.40, 27.31],
-                        [92.14, 29.64],
-                        [90.55, 29.03],
-                        [89.48, 28.86],
-                        [87.36, 29.33],
-                        [85.78, 32.25],
-                        [80.92, 32.76],
-                        [80.04, 33.57],
-                        [78.84, 34.05],
-                        [75.89, 35.86],
-                        [73.53, 39.51],
-                        [73.66, 53.33]
-                    ]
-                ]
-            }
-        };
+        // Laad de TopoJSON data
+        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+            .then(function(topology) {
+                // Converteer TopoJSON naar GeoJSON
+                var geojson = topojson.feature(topology, topology.objects.countries);
 
-        // Voeg de China vectorlaag toe met groene, dikke rand
-        var chinaLayer = L.geoJSON(chinaGeoJSON, {
-            style: {
-                fillColor: 'transparent',  // Transparante vulling
-                color: 'green',  // Groene rand
-                weight: 5,  // Dikkere rand (5 pixels)
-                opacity: 1  // Volledig dekkend
-            }
-        }).addTo(map);
+                // Maak een Leaflet GeoJSON laag
+                var countriesLayer = L.geoJSON(geojson, {
+                    style: function(feature) {
+                        // Standaard stijl voor landen
+                        var defaultStyle = {
+                            fillColor: '#D3D3D3', // Lichtgrijs
+                            weight: 1,
+                            opacity: 1,
+                            color: 'white',
+                            fillOpacity: 0.7
+                        };
 
-        // Voeg een popup toe aan de China laag
-        chinaLayer.bindPopup('China Grenzen');
+                        // China specifiek markeren (China's ISO code is '156')
+                        if (feature.id === '156') {
+                            return {
+                                ...defaultStyle,
+                                fillColor: 'green',
+                                color: 'darkgreen',
+                                weight: 2,
+                                fillOpacity: 0.5
+                            };
+                        }
 
-        // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
-        chinaLayer.on('click', function() {
-            map.fitBounds(chinaLayer.getBounds());
-        });
+                        return defaultStyle;
+                    },
+                    onEachFeature: function(feature, layer) {
+                        // Popup met landnaam
+                        if (feature.properties.name) {
+                            layer.bindPopup(feature.properties.name);
+                        }
+                    }
+                }).addTo(map);
+
+                // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
+                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.id === '156');
+                if (chinaLayer) {
+                    chinaLayer.on('click', function() {
+                        map.fitBounds(this.getBounds());
+                    });
+                }
+            })
+            .catch(function(error) {
+                console.log('Error loading the TopoJSON data:', error);
+            });
     </script>
 </body>
 </html>
