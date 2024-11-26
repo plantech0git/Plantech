@@ -2,12 +2,14 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Kaart van Londen</title>
+    <title>Wereldkaart met China Vectorlaag</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-geojson-selector@0.5.1/dist/leaflet-geojson-selector.min.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-geojson-selector@0.5.1/dist/leaflet-geojson-selector.min.js"></script>
     <style>
         #map { 
-            height: 500px; 
+            height: 600px; 
             width: 100%; 
         }
     </style>
@@ -16,31 +18,50 @@
     <div id="map"></div>
 
     <script>
-        // Initialiseer de kaart, gecentreerd op Londen
-        var map = L.map('map').setView([51.5074, -0.1278], 10);
+        // Initialiseer de kaart, gecentreerd op de wereld
+        var map = L.map('map').setView([30, 110], 3);
 
         // Voeg een OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Voeg een markering toe voor het centrum van Londen
-        L.marker([51.5074, -0.1278])
-            .addTo(map)
-            .bindPopup('Centrum van Londen')
-            .openPopup();
+        // GeoJSON data voor China
+        var chinaGeoJSON = {
+            "type": "Feature",
+            "properties": {
+                "name": "China"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [73.66, 53.33],
+                        [135.03, 53.33],
+                        [135.03, 18.10],
+                        [73.66, 18.10],
+                        [73.66, 53.33]
+                    ]
+                ]
+            }
+        };
 
-        // Enkele bekende locaties toevoegen
-        var locaties = [
-            {coords: [51.5007, -0.1246], naam: 'Big Ben'},
-            {coords: [51.5014, -0.1419], naam: 'Buckingham Palace'},
-            {coords: [51.5138, -0.1160], naam: 'Tower of London'}
-        ];
+        // Voeg de China vectorlaag toe met groene kleur
+        var chinaLayer = L.geoJSON(chinaGeoJSON, {
+            style: {
+                fillColor: 'green',
+                color: 'green',
+                weight: 2,
+                fillOpacity: 0.5
+            }
+        }).addTo(map);
 
-        locaties.forEach(function(locatie) {
-            L.marker(locatie.coords)
-                .addTo(map)
-                .bindPopup(locatie.naam);
+        // Voeg een popup toe aan de China laag
+        chinaLayer.bindPopup('China');
+
+        // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
+        chinaLayer.on('click', function() {
+            map.fitBounds(chinaLayer.getBounds());
         });
     </script>
 </body>
