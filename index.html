@@ -2,13 +2,15 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Landen Kaart met China Gemarkeerd</title>
+    <title>Land/Provincie Kaart</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <style>
         #map { 
-            height: 600px; 
+            height: 100vh; 
             width: 100%; 
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
@@ -16,76 +18,62 @@
     <div id="map"></div>
 
     <script>
-        // Initieer de kaart gecentreerd op China
-        var map = L.map('map').setView([35, 105], 4);
+        // Centrale coördinaten voor landen (basis geografische centra)
+        const countryCenters = {
+            "China": [35.8617, 104.1954],
+            "Japan": [36.2048, 138.2529],
+            "United States": [37.0902, -95.7129],
+            "India": [20.5937, 78.9629],
+            "Russia": [61.5240, 105.3188],
+            "Brazil": [-14.2350, -51.9253],
+            "Australia": [-25.2744, 133.7751],
+            "Canada": [56.1304, -106.3468],
+            "Germany": [51.1657, 10.4515],
+            "France": [46.2276, 2.2137],
+            // Voeg meer landen toe zoals nodig
+        };
 
-        // Voeg een basis kaartlaag toe
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        function initLocationMap(data) {
+            // Verwijder bestaande kaart indien aanwezig
+            if (window.mapInstance) {
+                window.mapInstance.remove();
+            }
 
-        // Fetch de GeoJSON data van Natural Earth
-        fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
-            .then(response => response.json())
-            .then(data => {
-                // Maak een GeoJSON laag met landen
-                L.geoJSON(data, {
-                    style: function(feature) {
-                        // Controleer of het land China is
-                        if (feature.properties.ADMIN === 'China') {
-                            return {
-                                fillColor: '#2ecc71',  // Groene kleur voor China
-                                color: '#27ae60',      // Donkergroene rand
-                                weight: 2,
-                                fillOpacity: 0.7
-                            };
-                        } else {
-                            return {
-                                fillColor: '#3498db',  // Blauwe kleur voor andere landen
-                                weight: 0,             // Geen randen voor andere landen
-                                fillOpacity: 0.1       // Zeer transparant voor andere landen
-                            };
-                        }
-                    },
-                    onEachFeature: function(feature, layer) {
-                        // Voeg hover en click interactiviteit toe
-                        layer.on({
-                            mouseover: function(e) {
-                                // Alleen China krijgt hover-effect
-                                if (feature.properties.ADMIN === 'China') {
-                                    layer.setStyle({
-                                        fillColor: '#e74c3c',  // Rode hover-kleur
-                                        fillOpacity: 0.8,
-                                        weight: 3
-                                    });
-                                }
-                            },
-                            mouseout: function(e) {
-                                // Reset de stijl
-                                if (feature.properties.ADMIN === 'China') {
-                                    layer.setStyle({
-                                        fillColor: '#2ecc71',
-                                        fillOpacity: 0.7,
-                                        weight: 2
-                                    });
-                                }
-                            },
-                            click: function(e) {
-                                // Toon land naam en eigenschappen als er geklikt wordt
-                                if (feature.properties) {
-                                    var popupContent = `
-                                        <b>${feature.properties.ADMIN}</b><br>
-                                        ISO Code: ${feature.properties.ISO_A3}<br>
-                                        Continent: ${feature.properties.CONTINENT}
-                                    `;
-                                    layer.bindPopup(popupContent).openPopup();
-                                }
-                            }
-                        });
-                    }
-                }).addTo(map);
-            })
-            .catch(error => console.error('Error loading GeoJSON:', error));
+            // Zoek de coördinaten voor het land
+            let center = countryCenters[data.country] || [0, 0];
+            let zoomLevel = data.zoomLevel || 5;
+
+            // Kaart initialiseren 
+            window.mapInstance = L.map('map').setView(center, zoomLevel);
+
+            // Basis kaartlaag toevoegen
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(window.mapInstance);
+
+            // Markeer het land
+            L.marker(center)
+                .addTo(window.mapInstance)
+                .bindPopup(data.country || 'Geselecteerde locatie')
+                .openPopup();
+        }
+
+        // Luister naar POST requests
+        window.addEventListener('message', function(event) {
+            try {
+                const data = event.data;
+                
+                // Valideer de data
+                if (data.country) {
+                    initLocationMap(data);
+                }
+            } catch (error) {
+                console.error('Fout bij verwerken locatiedata:', error);
+            }
+        }, false);
+
+        // Stuurt een bericht terug dat de kaart gereed is
+        window.parent.postMessage({ status: 'ready' }, '*');
     </script>
 </body>
 </html>
