@@ -2,95 +2,72 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>World Atlas TopoJSON</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="https://unpkg.com/topojson@3"></script>
+    <title>Landen Kaart met Leaflet en TopoJSON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <style>
         #map { 
             height: 600px; 
             width: 100%; 
         }
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
     <script>
-        // Initialiseer de kaart
-        var map = L.map('map').setView([30, 0], 3);
-        
-        // Voeg OpenStreetMap tile layer toe
+        // Initieer de kaart
+        var map = L.map('map').setView([20, 0], 2);
+
+        // Voeg een basis kaartlaag toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
-        
-        // Laad de TopoJSON data met een meer gedetailleerde dataset
-        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-            .then(function(topology) {
+
+        // Fetch de TopoJSON data
+        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+            .then(response => response.json())
+            .then(topology => {
                 // Converteer TopoJSON naar GeoJSON
-                var geojson = topojson.feature(topology, topology.objects.countries);
+                var countries = topojson.feature(topology, topology.objects.countries);
                 
-                // Maak een Leaflet GeoJSON laag
-                var countriesLayer = L.geoJSON(geojson, {
-                    filter: function(feature) {
-                        // Filter uit om alleen echte landgrenzen weer te geven
-                        return feature.id === '643' || feature.id === '242' || feature.properties.name !== '';
-                    },
+                // Maak een GeoJSON laag met landen
+                L.geoJSON(countries, {
                     style: function(feature) {
-                        // Standaard stijl voor landen
-                        var defaultStyle = {
-                            fillColor: '#D3D3D3', // Lichtgrijs
+                        return {
+                            fillColor: '#3388ff',
+                            color: '#000',
                             weight: 1,
-                            opacity: 1,
-                            color: 'gray',
-                            fillOpacity: 0.7
+                            fillOpacity: 0.6
                         };
-                        
-                        // Aanpassing voor Rusland
-                        if (feature.id === '643') {
-                            return {
-                                ...defaultStyle,
-                                color: 'darkgray',
-                                weight: 2
-                            };
-                        }
-                        
-                        // Aanpassing voor Fiji
-                        if (feature.id === '242') {
-                            return {
-                                ...defaultStyle,
-                                color: 'darkgray',
-                                weight: 2
-                            };
-                        }
-                        
-                        return defaultStyle;
                     },
                     onEachFeature: function(feature, layer) {
-                        // Popup met landnaam
-                        if (feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
-                        }
+                        // Voeg hover en click interactiviteit toe
+                        layer.on({
+                            mouseover: function(e) {
+                                layer.setStyle({
+                                    fillColor: '#ff6b6b',
+                                    fillOpacity: 0.8
+                                });
+                            },
+                            mouseout: function(e) {
+                                layer.setStyle({
+                                    fillColor: '#3388ff',
+                                    fillOpacity: 0.6
+                                });
+                            },
+                            click: function(e) {
+                                // Toon land naam als er geklikt wordt
+                                if (feature.properties && feature.properties.name) {
+                                    layer.bindPopup(feature.properties.name).openPopup();
+                                }
+                            }
+                        });
                     }
                 }).addTo(map);
-                
-                // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
-                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.id === '156');
-                if (chinaLayer) {
-                    chinaLayer.on('click', function() {
-                        map.fitBounds(this.getBounds());
-                    });
-                }
             })
-            .catch(function(error) {
-                console.log('Error loading the TopoJSON data:', error);
-            });
+            .catch(error => console.error('Error loading TopoJSON:', error));
     </script>
 </body>
 </html>
