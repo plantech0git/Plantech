@@ -2,10 +2,9 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Landen Kaart met Leaflet en TopoJSON</title>
+    <title>Landen Kaart met Duidelijke Grenzen</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <style>
         #map { 
             height: 600px; 
@@ -25,15 +24,12 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Fetch de TopoJSON data
-        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+        // Fetch de GeoJSON data van Natural Earth
+        fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
             .then(response => response.json())
-            .then(topology => {
-                // Converteer TopoJSON naar GeoJSON
-                var countries = topojson.feature(topology, topology.objects.countries);
-                
+            .then(data => {
                 // Maak een GeoJSON laag met landen
-                L.geoJSON(countries, {
+                L.geoJSON(data, {
                     style: function(feature) {
                         return {
                             fillColor: '#3498db',  // Heldere blauwtint
@@ -61,10 +57,12 @@
                                 });
                             },
                             click: function(e) {
-                                // Toon land naam als er geklikt wordt
-                                if (feature.id) {
+                                // Toon land naam en enkele eigenschappen als er geklikt wordt
+                                if (feature.properties) {
                                     var popupContent = `
-                                        <b>Land ID: ${feature.id}</b>
+                                        <b>${feature.properties.ADMIN}</b><br>
+                                        ISO Code: ${feature.properties.ISO_A3}<br>
+                                        Continent: ${feature.properties.CONTINENT}
                                     `;
                                     layer.bindPopup(popupContent).openPopup();
                                 }
@@ -73,7 +71,7 @@
                     }
                 }).addTo(map);
             })
-            .catch(error => console.error('Error loading TopoJSON:', error));
+            .catch(error => console.error('Error loading GeoJSON:', error));
     </script>
 </body>
 </html>
