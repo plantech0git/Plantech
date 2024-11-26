@@ -55,6 +55,16 @@
                             };
                         }
 
+                        // Controleer op Rusland en Fiji
+                        if (feature.id === '643' || feature.id === '242') {
+                            return {
+                                ...defaultStyle,
+                                weight: 2, // Dikkere rand
+                                opacity: 1, // Volledig dekkend
+                                fillOpacity: 0.7 // Iets minder transparant
+                            };
+                        }
+
                         return defaultStyle;
                     },
                     onEachFeature: function(feature, layer) {
