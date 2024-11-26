@@ -2,10 +2,9 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Landen Kaart met Leaflet en TopoJSON</title>
+    <title>Landen Kaart met Leaflet en GeoJSON</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <style>
         #map { 
             height: 600px; 
@@ -25,19 +24,16 @@
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Fetch de TopoJSON data
-        fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+        // Fetch de GeoJSON data van Natural Earth
+        fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
             .then(response => response.json())
-            .then(topology => {
-                // Converteer TopoJSON naar GeoJSON
-                var countries = topojson.feature(topology, topology.objects.countries);
-                
+            .then(data => {
                 // Maak een GeoJSON laag met landen
-                L.geoJSON(countries, {
+                L.geoJSON(data, {
                     style: function(feature) {
                         return {
-                            fillColor: '#3388ff',
-                            color: '#000',
+                            fillColor: '#4a89dc',  // Een mooiere blauwtint
+                            color: '#2c3e50',      // Donkergrijze randkleur
                             weight: 1,
                             fillOpacity: 0.6
                         };
@@ -47,27 +43,32 @@
                         layer.on({
                             mouseover: function(e) {
                                 layer.setStyle({
-                                    fillColor: '#ff6b6b',
+                                    fillColor: '#e74c3c',  // Rode hover-kleur
                                     fillOpacity: 0.8
                                 });
                             },
                             mouseout: function(e) {
                                 layer.setStyle({
-                                    fillColor: '#3388ff',
+                                    fillColor: '#4a89dc',
                                     fillOpacity: 0.6
                                 });
                             },
                             click: function(e) {
-                                // Toon land naam als er geklikt wordt
-                                if (feature.properties && feature.properties.name) {
-                                    layer.bindPopup(feature.properties.name).openPopup();
+                                // Toon land naam en enkele eigenschappen als er geklikt wordt
+                                if (feature.properties) {
+                                    var popupContent = `
+                                        <b>${feature.properties.ADMIN}</b><br>
+                                        ISO Code: ${feature.properties.ISO_A3}<br>
+                                        Continent: ${feature.properties.CONTINENT}
+                                    `;
+                                    layer.bindPopup(popupContent).openPopup();
                                 }
                             }
                         });
                     }
                 }).addTo(map);
             })
-            .catch(error => console.error('Error loading TopoJSON:', error));
+            .catch(error => console.error('Error loading GeoJSON:', error));
     </script>
 </body>
 </html>
