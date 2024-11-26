@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>World Atlas TopoJSON met landen en provincies</title>
+    <title>World Atlas TopoJSON</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -16,37 +16,43 @@
 </head>
 <body>
     <div id="map"></div>
-
     <script>
         // Initialiseer de kaart
-        var map = L.map('map', {
-            crs: L.CRS.EPSG3857, // Mercator projectie
-            minZoom: 2, // Minimale zoomniveau
-            maxZoom: 6 // Maximale zoomniveau
-        }).setView([30, 0], 3);
-
+        var map = L.map('map').setView([30, 0], 3);
         // Voeg OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
-
-        // Laad de TopoJSON data
-        d3.json('https://unpkg.com/world-atlas@2.0.2/countries-110m.json')
+        
+        // Laad de TopoJSON data met een meer gedetailleerde dataset
+        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
             .then(function(topology) {
                 // Converteer TopoJSON naar GeoJSON
-                var countries = topojson.feature(topology, topology.objects.countries);
-                var states = topojson.feature(topology, topology.objects.states);
-
-                // Maak Leaflet GeoJSON lagen voor landen en provincies
-                var countriesLayer = L.geoJSON(countries, {
+                var geojson = topojson.feature(topology, topology.objects.countries);
+                
+                // Maak een Leaflet GeoJSON laag
+                var countriesLayer = L.geoJSON(geojson, {
                     style: function(feature) {
-                        return {
+                        // Standaard stijl voor landen
+                        var defaultStyle = {
                             fillColor: '#D3D3D3', // Lichtgrijs
                             weight: 1,
                             opacity: 1,
-                            color: 'white',
+                            color: 'gray',
                             fillOpacity: 0.7
                         };
+                        
+                        // China specifiek markeren (China's ISO code is '156')
+                        if (feature.id === '156') {
+                            return {
+                                ...defaultStyle,
+                                fillColor: 'green',
+                                color: 'darkgreen',
+                                weight: 2,
+                                fillOpacity: 0.5
+                            };
+                        }
+                        return defaultStyle;
                     },
                     onEachFeature: function(feature, layer) {
                         // Popup met landnaam
@@ -55,27 +61,9 @@
                         }
                     }
                 }).addTo(map);
-
-                var statesLayer = L.geoJSON(states, {
-                    style: function(feature) {
-                        return {
-                            fillColor: '#C0C0C0', // Lichtgrijs
-                            weight: 1,
-                            opacity: 1,
-                            color: 'white',
-                            fillOpacity: 0.5
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        // Popup met provincienaam
-                        if (feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
-                        }
-                    }
-                }).addTo(map);
-
+                
                 // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
-                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.properties.name === 'China');
+                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.id === '156');
                 if (chinaLayer) {
                     chinaLayer.on('click', function() {
                         map.fitBounds(this.getBounds());
