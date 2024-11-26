@@ -16,7 +16,6 @@
 </head>
 <body>
     <div id="map"></div>
-
     <script>
         // Centrale coördinaten voor landen (basis geografische centra)
         const countryCenters = {
@@ -33,29 +32,83 @@
             // Voeg meer landen toe zoals nodig
         };
 
-        function initLocationMap(data) {
-            // Verwijder bestaande kaart indien aanwezig
-            if (window.mapInstance) {
-                window.mapInstance.remove();
+        let map, countryLayer;
+
+        function initLocationMap() {
+            // Kaart initialiseren 
+            map = L.map('map').setView([0, 0], 2);
+
+            // Basis kaartlaag toevoegen
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Voeg de landen toe als GeoJSON laag
+            countryLayer = L.geoJSON(null, {
+                style: {
+                    color: '#333',
+                    weight: 1,
+                    fillColor: '#fff',
+                    fillOpacity: 0.5
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.on({
+                        mouseover: function () {
+                            this.setStyle({
+                                fillColor: '#ccc',
+                                fillOpacity: 0.7
+                            });
+                        },
+                        mouseout: function () {
+                            this.setStyle({
+                                fillColor: '#fff',
+                                fillOpacity: 0.5
+                            });
+                        }
+                    });
+                }
+            }).addTo(map);
+        }
+
+        function updateLocationMap(data) {
+            // Verwijder bestaande GeoJSON laag
+            if (countryLayer) {
+                map.removeLayer(countryLayer);
             }
 
             // Zoek de coördinaten voor het land
             let center = countryCenters[data.country] || [0, 0];
             let zoomLevel = data.zoomLevel || 5;
 
-            // Kaart initialiseren 
-            window.mapInstance = L.map('map').setView(center, zoomLevel);
+            // Stel de kaart in op het nieuwe land
+            map.setView(center, zoomLevel);
 
-            // Basis kaartlaag toevoegen
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(window.mapInstance);
-
-            // Markeer het land
-            L.marker(center)
-                .addTo(window.mapInstance)
-                .bindPopup(data.country || 'Geselecteerde locatie')
-                .openPopup();
+            // Voeg het nieuwe land toe als GeoJSON laag
+            countryLayer = L.geoJSON([{
+                "type": "Feature",
+                "properties": {
+                    "name": data.country
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [center[1] - 5, center[0] - 5],
+                            [center[1] + 5, center[0] - 5],
+                            [center[1] + 5, center[0] + 5],
+                            [center[1] - 5, center[0] + 5],
+                            [center[1] - 5, center[0] - 5]
+                        ]
+                    ]
+                }
+            }], {
+                style: {
+                    color: '#333',
+                    weight: 2,
+                    fillColor: 'red',
+                    fillOpacity: 0.5
+                }
+            }).addTo(map);
         }
 
         // Luister naar POST requests
@@ -65,12 +118,15 @@
                 
                 // Valideer de data
                 if (data.country) {
-                    initLocationMap(data);
+                    updateLocationMap(data);
                 }
             } catch (error) {
                 console.error('Fout bij verwerken locatiedata:', error);
             }
         }, false);
+
+        // Initaliseer de kaart
+        initLocationMap();
 
         // Stuurt een bericht terug dat de kaart gereed is
         window.parent.postMessage({ status: 'ready' }, '*');
