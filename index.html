@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>World Atlas TopoJSON</title>
+    <title>World Atlas TopoJSON met landen en provincies</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -31,45 +31,22 @@
         }).addTo(map);
 
         // Laad de TopoJSON data
-        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+        d3.json('https://unpkg.com/world-atlas@2.0.2/countries-110m.json')
             .then(function(topology) {
                 // Converteer TopoJSON naar GeoJSON
-                var geojson = topojson.feature(topology, topology.objects.countries);
+                var countries = topojson.feature(topology, topology.objects.countries);
+                var states = topojson.feature(topology, topology.objects.states);
 
-                // Maak een Leaflet GeoJSON laag
-                var countriesLayer = L.geoJSON(geojson, {
+                // Maak Leaflet GeoJSON lagen voor landen en provincies
+                var countriesLayer = L.geoJSON(countries, {
                     style: function(feature) {
-                        // Standaard stijl voor landen
-                        var defaultStyle = {
+                        return {
                             fillColor: '#D3D3D3', // Lichtgrijs
                             weight: 1,
                             opacity: 1,
                             color: 'white',
                             fillOpacity: 0.7
                         };
-
-                        // China specifiek markeren (China's ISO code is '156')
-                        if (feature.id === '156') {
-                            return {
-                                ...defaultStyle,
-                                fillColor: 'green',
-                                color: 'darkgreen',
-                                weight: 2,
-                                fillOpacity: 0.5
-                            };
-                        }
-
-                        // Rusland (ISO-code '643') en Fiji (ISO-code '242') markeren
-                        if (feature.id === '643' || feature.id === '242') {
-                            return {
-                                ...defaultStyle,
-                                weight: 2, // Dikkere rand
-                                opacity: 1, // Volledig dekkend
-                                fillOpacity: 0.7 // Iets minder transparant
-                            };
-                        }
-
-                        return defaultStyle;
                     },
                     onEachFeature: function(feature, layer) {
                         // Popup met landnaam
@@ -79,8 +56,26 @@
                     }
                 }).addTo(map);
 
+                var statesLayer = L.geoJSON(states, {
+                    style: function(feature) {
+                        return {
+                            fillColor: '#C0C0C0', // Lichtgrijs
+                            weight: 1,
+                            opacity: 1,
+                            color: 'white',
+                            fillOpacity: 0.5
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        // Popup met provincienaam
+                        if (feature.properties.name) {
+                            layer.bindPopup(feature.properties.name);
+                        }
+                    }
+                }).addTo(map);
+
                 // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
-                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.id === '156');
+                var chinaLayer = countriesLayer.getLayers().find(layer => layer.feature.properties.name === 'China');
                 if (chinaLayer) {
                     chinaLayer.on('click', function() {
                         map.fitBounds(this.getBounds());
