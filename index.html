@@ -12,6 +12,11 @@
             height: 600px; 
             width: 100%; 
         }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -19,6 +24,7 @@
     <script>
         // Initialiseer de kaart
         var map = L.map('map').setView([30, 0], 3);
+        
         // Voeg OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
@@ -38,7 +44,7 @@
                             fillColor: '#D3D3D3', // Lichtgrijs
                             weight: 1,
                             opacity: 1,
-                            color: 'gray',
+                            color: 'white',
                             fillOpacity: 0.7
                         };
                         
@@ -52,6 +58,7 @@
                                 fillOpacity: 0.5
                             };
                         }
+                        
                         return defaultStyle;
                     },
                     onEachFeature: function(feature, layer) {
