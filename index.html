@@ -19,7 +19,11 @@
 
     <script>
         // Initialiseer de kaart
-        var map = L.map('map').setView([30, 0], 3);
+        var map = L.map('map', {
+            crs: L.CRS.EPSG3857, // Mercator projectie
+            minZoom: 2, // Minimale zoomniveau
+            maxZoom: 6 // Maximale zoomniveau
+        }).setView([30, 0], 3);
 
         // Voeg OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -55,7 +59,7 @@
                             };
                         }
 
-                        // Controleer op Rusland en Fiji
+                        // Rusland (ISO-code '643') en Fiji (ISO-code '242') markeren
                         if (feature.id === '643' || feature.id === '242') {
                             return {
                                 ...defaultStyle,
