@@ -2,11 +2,9 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Wereldkaart met China Vectorlaag</title>
+    <title>Gedetailleerde Kaart van China</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-geojson-selector@0.5.1/dist/leaflet-geojson-selector.min.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-geojson-selector@0.5.1/dist/leaflet-geojson-selector.min.js"></script>
     <style>
         #map { 
             height: 600px; 
@@ -18,15 +16,15 @@
     <div id="map"></div>
 
     <script>
-        // Initialiseer de kaart, gecentreerd op de wereld
-        var map = L.map('map').setView([30, 110], 3);
+        // Initialiseer de kaart, gecentreerd op China
+        var map = L.map('map').setView([35, 103], 4);
 
         // Voeg een OpenStreetMap tile layer toe
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // GeoJSON data voor China
+        // GeoJSON data voor China met nauwkeurige landgrens
         var chinaGeoJSON = {
             "type": "Feature",
             "properties": {
@@ -37,9 +35,42 @@
                 "coordinates": [
                     [
                         [73.66, 53.33],
-                        [135.03, 53.33],
-                        [135.03, 18.10],
-                        [73.66, 18.10],
+                        [134.77, 53.33],
+                        [134.77, 47.72],
+                        [137.12, 46.82],
+                        [137.12, 42.38],
+                        [136.18, 41.11],
+                        [136.51, 38.96],
+                        [134.77, 38.94],
+                        [134.77, 34.25],
+                        [132.43, 33.61],
+                        [131.86, 33.23],
+                        [130.20, 31.82],
+                        [127.96, 30.85],
+                        [124.21, 27.44],
+                        [119.11, 22.40],
+                        [114.17, 22.27],
+                        [113.84, 22.19],
+                        [113.34, 21.26],
+                        [109.49, 21.54],
+                        [108.86, 21.10],
+                        [107.38, 20.14],
+                        [106.62, 20.90],
+                        [105.29, 21.71],
+                        [104.05, 22.96],
+                        [101.76, 23.37],
+                        [98.80, 24.42],
+                        [96.40, 27.31],
+                        [92.14, 29.64],
+                        [90.55, 29.03],
+                        [89.48, 28.86],
+                        [87.36, 29.33],
+                        [85.78, 32.25],
+                        [80.92, 32.76],
+                        [80.04, 33.57],
+                        [78.84, 34.05],
+                        [75.89, 35.86],
+                        [73.53, 39.51],
                         [73.66, 53.33]
                     ]
                 ]
@@ -50,7 +81,7 @@
         var chinaLayer = L.geoJSON(chinaGeoJSON, {
             style: {
                 fillColor: 'green',
-                color: 'green',
+                color: 'darkgreen',
                 weight: 2,
                 fillOpacity: 0.5
             }
