@@ -31,7 +31,7 @@
         }).addTo(map);
         
         // Laad de TopoJSON data met een meer gedetailleerde dataset
-        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
             .then(function(topology) {
                 // Converteer TopoJSON naar GeoJSON
                 var geojson = topojson.feature(topology, topology.objects.countries);
@@ -44,18 +44,25 @@
                             fillColor: '#D3D3D3', // Lichtgrijs
                             weight: 1,
                             opacity: 1,
-                            color: 'white',
+                            color: 'gray',
                             fillOpacity: 0.7
                         };
                         
-                        // China specifiek markeren (China's ISO code is '156')
-                        if (feature.id === '156') {
+                        // Aanpassing voor Rusland
+                        if (feature.id === '643') {
                             return {
                                 ...defaultStyle,
-                                fillColor: 'green',
-                                color: 'darkgreen',
-                                weight: 2,
-                                fillOpacity: 0.5
+                                color: 'darkgray',
+                                weight: 2
+                            };
+                        }
+                        
+                        // Aanpassing voor Fiji
+                        if (feature.id === '242') {
+                            return {
+                                ...defaultStyle,
+                                color: 'darkgray',
+                                weight: 2
                             };
                         }
                         
