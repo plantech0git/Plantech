@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Gedetailleerde Kaart van China</title>
+    <title>China Landsgrenzen Gemarkeerd</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <style>
@@ -77,18 +77,18 @@
             }
         };
 
-        // Voeg de China vectorlaag toe met groene kleur
+        // Voeg de China vectorlaag toe met groene, dikke rand
         var chinaLayer = L.geoJSON(chinaGeoJSON, {
             style: {
-                fillColor: 'green',
-                color: 'darkgreen',
-                weight: 2,
-                fillOpacity: 0.5
+                fillColor: 'transparent',  // Transparante vulling
+                color: 'green',  // Groene rand
+                weight: 5,  // Dikkere rand (5 pixels)
+                opacity: 1  // Volledig dekkend
             }
         }).addTo(map);
 
         // Voeg een popup toe aan de China laag
-        chinaLayer.bindPopup('China');
+        chinaLayer.bindPopup('China Grenzen');
 
         // Zorg ervoor dat de kaart ingezoomd wordt op China wanneer erop geklikt wordt
         chinaLayer.on('click', function() {
