@@ -12,19 +12,9 @@
             margin: 0;
             padding: 0;
         }
-        #country-input {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 8px 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
-    <input type="text" id="country-input" placeholder="Enter a country" />
     <div id="map"></div>
     <script>
         // Centrale coördinaten voor landen (basis geografische centra)
@@ -39,7 +29,6 @@
             "Canada": [56.1304, -106.3468],
             "Germany": [51.1657, 10.4515],
             "France": [46.2276, 2.2137],
-            // Voeg meer landen toe zoals nodig
         };
 
         let map, countryLayer;
@@ -78,10 +67,6 @@
                     });
                 }
             }).addTo(map);
-
-            // Add event listener for input field
-            const countryInput = document.getElementById('country-input');
-            countryInput.addEventListener('input', handleCountryInput);
         }
 
         function updateLocationMap(data) {
@@ -125,34 +110,21 @@
             }).addTo(map);
         }
 
-        function handleCountryInput() {
-            const countryInput = document.getElementById('country-input');
-            const country = countryInput.value.trim();
-            if (country) {
-                updateMapLocation(country, 5);
-            }
-        }
-
-        function updateMapLocation(country, zoomLevel) {
-            fetch('/map-communication', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ country, zoomLevel })
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('Map location updated successfully');
-                    updateLocationMap({ country, zoomLevel });
+        // Luister naar POST requests
+        window.addEventListener('message', function(event) {
+            try {
+                const data = event.data;
+                
+                // Valideer de data
+                if (data.country) {
+                    updateLocationMap(data);
                 } else {
-                    console.error('Error updating map location:', response.status);
+                    console.error('Fout: Ongeldige data ontvangen van POST request');
                 }
-            })
-            .catch(error => {
-                console.error('Error sending map communication request:', error);
-            });
-        }
+            } catch (error) {
+                console.error('Fout bij verwerken locatiedata:', error);
+            }
+        }, false);
 
         // Initaliseer de kaart
         initLocationMap();
