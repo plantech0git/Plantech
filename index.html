@@ -108,6 +108,9 @@
                     fillOpacity: 0.5
                 }
             }).addTo(map);
+
+            // Send a success response message to the parent window
+            window.parent.postMessage({ status: 'POST_request_success' }, '*');
         }
 
         // Luister naar POST requests
@@ -120,9 +123,13 @@
                     updateLocationMap(data);
                 } else {
                     console.error('Fout: Ongeldige data ontvangen van POST request');
+                    // Send an error response message to the parent window
+                    window.parent.postMessage({ status: 'POST_request_error' }, '*');
                 }
             } catch (error) {
                 console.error('Fout bij verwerken locatiedata:', error);
+                // Send an error response message to the parent window
+                window.parent.postMessage({ status: 'POST_request_error' }, '*');
             }
         }, false);
 
