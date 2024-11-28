@@ -1,100 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Plant Origin Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <title>Land/Provincie Kaart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <style>
         #map { 
-            height: 500px; 
+            height: 100vh; 
             width: 100%; 
-        }
-        body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
-
     <script>
-        // Initialize the map
-        const map = L.map('map').setView([0, 0], 2);
+        // Centrale coördinaten voor landen (basis geografische centra)
+        const countryCenters = {
+            "China": [35.8617, 104.1954],
+            "Japan": [36.2048, 138.2529],
+            "United States": [37.0902, -95.7129],
+            "India": [20.5937, 78.9629],
+            "Russia": [61.5240, 105.3188],
+            "Brazil": [-14.2350, -51.9253],
+            "Australia": [-25.2744, 133.7751],
+            "Canada": [56.1304, -106.3468],
+            "Germany": [51.1657, 10.4515],
+            "France": [46.2276, 2.2137],
+        };
 
-        // Add base tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        let map, countryLayer;
 
-        // Variable to store the current highlighted country layer
-        let currentCountryLayer = null;
+        function initLocationMap() {
+            // Kaart initialiseren 
+            map = L.map('map').setView([0, 0], 2);
 
-        // Function to highlight a country
-        function highlightCountry(countryName) {
-            // Remove previous country layer if exists
-            if (currentCountryLayer) {
-                map.removeLayer(currentCountryLayer);
+            // Basis kaartlaag toevoegen
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Voeg de landen toe als GeoJSON laag
+            countryLayer = L.geoJSON(null, {
+                style: {
+                    color: '#333',
+                    weight: 1,
+                    fillColor: '#fff',
+                    fillOpacity: 0.5
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.on({
+                        mouseover: function () {
+                            this.setStyle({
+                                fillColor: '#ccc',
+                                fillOpacity: 0.7
+                            });
+                        },
+                        mouseout: function () {
+                            this.setStyle({
+                                fillColor: '#fff',
+                                fillOpacity: 0.5
+                            });
+                        }
+                    });
+                }
+            }).addTo(map);
+        }
+
+        function updateLocationMap(data) {
+            // Verwijder bestaande GeoJSON laag
+            if (countryLayer) {
+                map.removeLayer(countryLayer);
             }
 
-            // Load GeoJSON for the specified country
-            fetch(`https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson`)
-                .then(response => response.json())
-                .then(data => {
-                    // Find the country in the GeoJSON
-                    const countryFeature = data.features.find(
-                        feature => feature.properties.ADMIN.toLowerCase() === countryName.toLowerCase()
-                    );
+            // Zoek de coördinaten voor het land
+            let center = countryCenters[data.country] || [0, 0];
+            let zoomLevel = data.zoomLevel || 5;
 
-                    if (countryFeature) {
-                        // Create a GeoJSON layer for the country
-                        currentCountryLayer = L.geoJSON(countryFeature, {
-                            style: {
-                                color: 'red',
-                                weight: 2,
-                                fillColor: 'yellow',
-                                fillOpacity: 0.5
-                            }
-                        }).addTo(map);
+            // Stel de kaart in op het nieuwe land
+            map.setView(center, zoomLevel);
 
-                        // Fit map view to the country
-                        map.fitBounds(currentCountryLayer.getBounds());
-                    } else {
-                        console.error('Country not found');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading GeoJSON:', error);
-                });
+            // Voeg het nieuwe land toe als GeoJSON laag
+            countryLayer = L.geoJSON([{
+                "type": "Feature",
+                "properties": {
+                    "name": data.country
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [center[1] - 5, center[0] - 5],
+                            [center[1] + 5, center[0] - 5],
+                            [center[1] + 5, center[0] + 5],
+                            [center[1] - 5, center[0] + 5],
+                            [center[1] - 5, center[0] - 5]
+                        ]
+                    ]
+                }
+            }], {
+                style: {
+                    color: '#333',
+                    weight: 2,
+                    fillColor: 'red',
+                    fillOpacity: 0.5
+                }
+            }).addTo(map);
+
+            // Send a success response message to the parent window
+            window.parent.postMessage({ status: 'POST_request_success' }, '*');
         }
 
-        // Example of how to use the highlightCountry function
-        // You can trigger this via a POST request or other method
-        function handleCountryHighlight(event) {
-            event.preventDefault();
-            const countryName = document.getElementById('countryInput').value;
-            highlightCountry(countryName);
-        }
+        // Luister naar POST requests
+        window.addEventListener('message', function(event) {
+            try {
+                const data = event.data;
+                
+                // Valideer de data
+                if (data.country) {
+                    updateLocationMap(data);
+                } else {
+                    console.error('Fout: Ongeldige data ontvangen van POST request');
+                    // Send an error response message to the parent window
+                    window.parent.postMessage({ status: 'POST_request_error' }, '*');
+                }
+            } catch (error) {
+                console.error('Fout bij verwerken locatiedata:', error);
+                // Send an error response message to the parent window
+                window.parent.postMessage({ status: 'POST_request_error' }, '*');
+            }
+        }, false);
 
-        // For demonstration (you'll replace this with your actual POST request handling)
-        window.addEventListener('DOMContentLoaded', () => {
-            // Simulated event listener for testing
-            document.getElementById('highlightButton').addEventListener('click', handleCountryHighlight);
-        });
+        // Initaliseer de kaart
+        initLocationMap();
 
-        // Function to handle POST request (to be implemented on your server)
-        function handlePostRequest(countryName) {
-            highlightCountry(countryName);
-        }
+        // Stuurt een bericht terug dat de kaart gereed is
+        window.parent.postMessage({ status: 'ready' }, '*');
     </script>
-
-    <!-- Optional: Simple form for testing (remove in production) -->
-    <form id="countryForm">
-        <input type="text" id="countryInput" placeholder="Enter Country Name">
-        <button id="highlightButton" type="submit">Highlight Country</button>
-    </form>
 </body>
 </html>
